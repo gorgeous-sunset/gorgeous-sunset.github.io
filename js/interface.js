@@ -1,5 +1,5 @@
 ﻿enchant();
-enchant.ENV.SOUND_ENABLED_ON_MOBILE_SAFARI = false;
+enchant.ENV.USE_TOUCH_TO_START_SCENE = false;
 
 var DROP_IMG = "img/drops.png";
 var TILE_IMG  = "img/display3.png";
