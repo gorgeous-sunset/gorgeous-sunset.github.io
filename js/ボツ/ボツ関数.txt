@@ -1,0 +1,195 @@
+function rand(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
+function search_entropy( board ) {		// 乱雑さの度合い（同色同士の距離の和）を求める関数
+	var c, z, i, j, len,
+		entropy = 0,
+		reference_point, reference_x, reference_y,
+		target_point, target_x, target_y,
+		color_index = [];
+
+	for(c=0; c<6; c++) color_index[c] = [];
+	for(z=0; z<30; z++) color_index[ board[z] ].push(z);		// 色別のドロップの座標
+
+	for(c=0; c<6; c++) {
+		len = color_index[c].length;
+		if( len < 3 ) continue;
+		for(i=0; i<len; i++) {
+			reference_point = color_index[c][i];				// 基準点
+			reference_x = reference_point % STAMP_COL;
+			reference_y = Math.floor( reference_point / STAMP_COL );
+			for(j=0; j<len; j++) {
+				target_point = color_index[c][j];				// 比較対象
+				if( reference_point == target_point ) continue;
+				target_x = target_point % STAMP_COL;
+				target_y = Math.floor( target_point / STAMP_COL );
+				entropy += Math.abs( reference_x - target_x );		// ｘ座標の差の絶対値を加算
+				//entropy += Math.abs( reference_y - target_y );	// ｙ座標の差の絶対値を加算
+			}
+		}
+	}
+	return entropy;
+}
+
+
+function search() {			// 最短手順の探索を行う関数
+	var queue = [],
+		coppy_board,
+		researched = [],
+		z, i, j, len, same,
+		nowIndex, nextIndex, preIndex,
+		nowColor, nextColor, hashCode = 0,
+		combo, max_combo = 0, max_rear,
+		front = 0, rear = 30, start_time = new Date();
+
+	for(z=0; z<30; z++) hashCode ^= hashKey[z][ board[z] ];		// 初期局面のハッシュコード作成
+
+	researched[ hashCode ] = [];
+	researched[ hashCode ].push( board );
+
+	for(z=0; z<30; z++) {						// 初期局面の３０通りの選択をキューに追加
+		researched[ hashCode ].push( z );
+		queue[z] = { hashCode: hashCode, thenIndex: z, previousIndex: -1, previousQueue: -1 };
+	}
+
+	while( rear < 3500000 ) {
+		nowIndex = queue[ front ].thenIndex;
+		preIndex = queue[ front ].previousIndex;
+		for(i=0; i<4; i++) {
+			nextIndex = adjacent[ nowIndex ][i];
+			if( nextIndex == -1 )		break;
+			if( nextIndex == preIndex ) continue;
+			hashCode	= queue[ front ].hashCode;					// ハッシュコードの復元
+			coppy_board = researched[ hashCode ][0].concat();		// 盤面の復元
+			nowColor	= coppy_board[ nowIndex ];
+			nextColor	= coppy_board[ nextIndex ];
+			if( nowColor != nextColor ){							// もし移動元と移動先の色が違うなら
+				change( nowIndex, nextIndex, coppy_board );			// 配列要素を入れ替え、ハッシュコードを更新する
+				hashCode ^= hashKey[ nowIndex ][ nowColor ];
+				hashCode ^= hashKey[ nextIndex ][ nextColor ];
+				hashCode ^= hashKey[ nowIndex ][ nextColor ];
+				hashCode ^= hashKey[ nextIndex ][ nowColor ];
+			}
+
+			if( Array.isArray( researched[ hashCode ] ) ){				// 同一局面の判定
+				same = false, len = researched[ hashCode ].length;
+
+				for(j=1; j<len; j++) if( researched[ hashCode ][j] == nextIndex ) { same = true; break; }
+				if( same ) continue;
+			}else{
+				researched[ hashCode ] = [];
+				researched[ hashCode ].push( coppy_board );
+			}
+
+			researched[ hashCode ].push( nextIndex );
+			queue[ rear ] = { hashCode: hashCode, thenIndex: nextIndex, previousIndex: nowIndex, previousQueue: front };
+/*
+			if( nowColor != nextColor && count_combo( coppy_board ) > 5 ) {
+				console.log("解かれた　(" + (new Date() - start_time) / 1000 + "秒)");
+				console.log("front:" + front + " rear:" + rear);
+				answer_arr = [];
+				answer( queue, rear );
+				console.log( answer_arr );
+				return;
+			}
+*/
+			if( nowColor != nextColor ){
+				combo =  count_combo( coppy_board );
+				if( combo > max_combo ){
+					max_combo = combo;
+					max_rear = rear;
+				}
+			}
+			rear++;
+		}
+		front++;
+	}
+
+	console.log("解かれた　(" + (new Date() - start_time) / 1000 + "秒)");
+	console.log("front:" + front + " rear:" + rear);
+	answer_arr = [];
+	answer( queue, max_rear );
+	console.log( answer_arr );
+}
+
+
+function search2() {			// 最短手順の探索を行う関数 (30回に分割する幅優先探索)
+	var queue = [],
+		coppy_board,
+		researched = [],
+		z, i, j, len, same,
+		nowIndex, nextIndex, preIndex,
+		nowColor, nextColor, hashCode = 0, init_hashCode = 0,
+		front, rear, all_rear = 0, start_time = new Date();
+
+	for(z=0; z<30; z++) init_hashCode ^= hashKey[z][ board[z] ];		// 初期局面のハッシュコード作成
+
+	for(z=0; z<30; z++) {						// 初期局面の３０通りの選択をキューに追加
+		queue = [];
+		researched = [];
+		hashCode = init_hashCode;
+		researched[ hashCode ] = [];
+		researched[ hashCode ].push( board );
+		researched[ hashCode ].push( z );
+
+		queue[0] = { hashCode: hashCode, thenIndex: z, previousIndex: -1, previousQueue: -1 };
+
+		front = 0; rear = 1;
+		while( rear < 2500000 ) {
+			nowIndex = queue[ front ].thenIndex;
+			preIndex = queue[ front ].previousIndex;
+			for(i=0; i<4; i++) {
+				nextIndex = adjacent[ nowIndex ][i];
+				if( nextIndex == -1 )		break;
+				if( nextIndex == preIndex ) continue;
+				hashCode	= queue[ front ].hashCode;					// ハッシュコードの復元
+				coppy_board = researched[ hashCode ][0].concat();		// 盤面の復元
+				nowColor	= coppy_board[ nowIndex ];
+				nextColor	= coppy_board[ nextIndex ];
+				if( nowColor != nextColor ){							// もし移動元と移動先の色が違うなら
+					change( nowIndex, nextIndex, coppy_board );			// 配列要素を入れ替え、ハッシュコードを更新する
+					hashCode ^= hashKey[ nowIndex ][ nowColor ];
+					hashCode ^= hashKey[ nextIndex ][ nextColor ];
+					hashCode ^= hashKey[ nowIndex ][ nextColor ];
+					hashCode ^= hashKey[ nextIndex ][ nowColor ];
+				}
+
+				if( Array.isArray( researched[ hashCode ] ) ){				// 同一局面の判定
+					len = researched[ hashCode ].length;
+					same = false;
+
+					for(j=1; j<len; j++) if( researched[ hashCode ][j] == nextIndex ) { same = true; break; }
+					if( same ) continue;
+				}else{
+					researched[ hashCode ] = [];
+					researched[ hashCode ].push( coppy_board );
+				}
+
+				researched[ hashCode ].push( nextIndex );
+				queue[rear] = { hashCode: hashCode, thenIndex: nextIndex, previousIndex: nowIndex, previousQueue: front };
+
+				if( nowColor != nextColor && count_combo( coppy_board ) > 6 ) {
+					console.log("解かれた　(" + (new Date() - start_time) / 1000 + "秒 " + (all_rear + rear) + "局面)");
+					answer_arr = [];
+					answer( queue, rear );
+					console.log( answer_arr );
+					return;
+				}
+				rear++;
+			}
+			front++;
+		}
+		all_rear += rear;
+		console.log( z + "地点の探索打ち切り" );
+	}
+	console.log("解を発見できず " + all_rear + "局面");
+}
+
+
+function answer( queue, front ) {
+	if( queue[ front ].previousQueue != -1 )
+		answer( queue, queue[ front ].previousQueue );
+	answer_arr.push( queue[ front ].thenIndex );
+}
