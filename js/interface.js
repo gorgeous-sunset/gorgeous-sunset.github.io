@@ -2,7 +2,7 @@
 enchant.ENV.USE_TOUCH_TO_START_SCENE = false;
 
 var DROP_IMG = "img/drops.png";
-var TILE_IMG  = "img/display3.png";
+var TILE_IMG = "img/display3.png";
 
 var STAGE_WIDTH  = 320;   // 画面の横幅
 var STAGE_HEIGHT = 460;   // 画面の縦幅
@@ -224,7 +224,7 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 var all_combo = 0;
 var all_length = 0;
 		var startTime = new Date();
-		for(var i=0; i<100; i++){
+		for(var i=0; i<1000000; i++){
 			shuffle_board();
 			all_combo += beam_search( board );
 			all_length += answer_arr.length - 1;
@@ -233,6 +233,7 @@ var all_length = 0;
 		console.log("100回の実行時間：" + (endTime - startTime) / 1000 + "秒" );
 		console.log("平均コンボ：" + (all_combo / 100) + "　平均手数：" + (all_length / 100) );
 */
+
 	}
 });
 
@@ -252,7 +253,7 @@ function createDrop( stage, x, y ) {		// ドロップのSpriteを作る関数
 }
 
 
-function createTimer() {
+function createTimer() {					// 時間制限ラベルを作る関数
 		if( typeof timer != "undefined" ) scene.removeChild( timer );
 		timer = new Label();
 		timer.moveTo( 10, 90 );
@@ -333,7 +334,7 @@ function dropMoveEvent( drop ){		// ドロップにイベントを追加する�
 }
 
 
-function touchEndProcessing() {			// 指がドロップから離れた時の処理
+function touchEndProcessing() {			// ドロップから指が離れた時の処理
 	if( !dragOkFlg ) return;
 	
 	dragStartFlg		= false;
@@ -439,25 +440,17 @@ InputBoardScene = enchant.Class.create( enchant.Scene, {		// 盤面を手入力�
 	initialize: function() {
 		Scene.call( this );
 
+		dropList = [];
 		var tile = new Sprite( STAGE_WIDTH, STAGE_HEIGHT );
 		tile.image = game.assets[ TILE_IMG ];
-		tile.addEventListener( Event.TOUCH_START, function(e){
-			addDrops( e );
-		});
-
-		tile.addEventListener( Event.TOUCH_MOVE, function(e){
-			addDrops( e );
-		});
+		tile.ontouchstart = tile.ontouchmove = function(e){ addDrops(e); };
 		this.addChild( tile );
-
-		dropList = [];
 
 		for( var i=0; i<DROP_KIND; i++ ) {
 			var drop = new Sprite( DROP_SIZE, DROP_SIZE );
 			drop.image = game.assets[ DROP_IMG ];
 			drop.frame = i;
-			drop.moveTo( 3 + DROP_SIZE * i, 80 );
-			drop.moveBy(0, -20);
+			drop.moveTo( 3 + DROP_SIZE * i, 60 );
 			this.addChild( drop );
 			drop.addEventListener( Event.TOUCH_END, function(e) {
 				select = e.target.frame;
@@ -483,29 +476,20 @@ function addDrops( e ) {
 	var touched_X = Math.floor(  e.x				/ DROP_SIZE );
 	var touched_Y = Math.floor( (e.y - TOP_MARGIN)	/ DROP_SIZE );
 
-	if( touched_X > 5 ) return;
-	if( touched_Y < 0 ) return;
-	if( typeof select == "undefined" ) return;
+	if( touched_Y < 0 || typeof select == "undefined" ) return;
 	
 	var drop = new Sprite( DROP_SIZE, DROP_SIZE );
 	drop.image = game.assets[ DROP_IMG ];
 	drop.frame = select;
 	drop.x = DROP_SIZE * touched_X
 	drop.y = DROP_SIZE * touched_Y + TOP_MARGIN;
+	drop.ontouchstart = drop.ontouchmove = function(e){ addDrops(e); };
+	scene.addChild( drop );
 
 	var z = fusion( touched_X, touched_Y );
 	board[z]		= select;
 	if( dropList[z] ) dropList[z].scene.removeChild( dropList[z] );
 	dropList[z]	= drop;
-
-	scene.addChild( drop );
-	drop.addEventListener( Event.TOUCH_START, function(e) {
-		addDrops( e );
-	});
-
-	drop.addEventListener( Event.TOUCH_MOVE, function(e) {
-		addDrops( e );
-	});
 }
 
 

@@ -1,5 +1,5 @@
 ﻿<!doctype html>
-<html>
+<html manifest="cache.manifest">
 <head>
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
 	<meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,6 +14,19 @@
 	</style>
 	<script src="js/algorithm.js"></script>
 	<script src="js/interface.js"></script>
+	<script>
+		var cache = window.applicationCache;
+		cache.addEventListener("updateready", function(){
+			if( confirm("Update?") ){
+				cache.swapCache();
+				location.reload();
+			}
+		});
+
+		if( navigator.onLine ){
+			cache.update();
+		}
+	</script>
 </head>
 <body>
 	<form>

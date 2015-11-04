@@ -225,7 +225,7 @@ function beam_search() {			// ビーム探索を行う関数
 						return max_combo;
 					}
 				}
-				//children++;
+				children++;
 			}
 		}
 		size = dam.length;
