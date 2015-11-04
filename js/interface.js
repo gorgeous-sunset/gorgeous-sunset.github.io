@@ -493,7 +493,7 @@ function addDrops( e ) {
 }
 
 
-function checkPassCode( Koala ) {
+function aiert( Koala ) {
 	var input = Koala.expr.value;
 	if(input==String.fromCharCode(51, 55, 55, 54))windowonload();
 	else alert(input);
