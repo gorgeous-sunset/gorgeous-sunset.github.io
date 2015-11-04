@@ -4,7 +4,7 @@ var STAMP_IMG = "img/drops.png";
 var TILE_IMG  = "img/display3.png";
 
 var STAGE_WIDTH  = 320;   // 画面の横幅
-var STAGE_HEIGHT = 480;   // 画面の縦幅
+var STAGE_HEIGHT = 460;   // 画面の縦幅
 var STAMP_SIZE   = 53;    // ドロップの大きさ
 var STAMP_KIND   = 6;     // ドロップの種類
 var STAMP_COL	 = 6;

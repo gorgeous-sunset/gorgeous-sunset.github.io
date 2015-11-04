@@ -5,7 +5,7 @@ var DROP_IMG = "img/drops.png";
 var TILE_IMG  = "img/display3.png";
 
 var STAGE_WIDTH  = 320;   // 画面の横幅
-var STAGE_HEIGHT = 480;   // 画面の縦幅
+var STAGE_HEIGHT = 460;   // 画面の縦幅
 var DROP_SIZE	 = 53;    // ドロップの大きさ
 var DROP_KIND    = 6;     // ドロップの種類
 var DROP_COL	 = 6;
@@ -22,6 +22,7 @@ var lineFlag = 1;		// 手順線を表示するかどうか
 var timeLimitFlag = 0;	// 時間制限を設けるかどうか
 
 var dropList;			// Spriteのリスト
+var buttonList = [];
 
 
 windowonload = function(){
@@ -137,6 +138,7 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 		this.addChild( tile );
 
 		var input_button = new Button("Input");
+		buttonList[0] = input_button;
 		input_button.moveTo( 5, 145 );
 		input_button.addEventListener( Event.TOUCH_END, function() {
 			game.popScene();
@@ -145,6 +147,7 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 		});
 
 		var reset_button = new Button("Reset");
+		buttonList[1] = reset_button;
 		reset_button.moveTo( 58, 145 );
 		reset_button.addEventListener( Event.TOUCH_END, function() {
 			board = coppy_board;
@@ -155,6 +158,7 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 		});
 
 		var shuffle_button = new Button("Shuffle");
+		buttonList[2] = shuffle_button;
 		shuffle_button.moveTo( 111, 145 );
 		shuffle_button.addEventListener( Event.TOUCH_END, function() {
 			shuffle_board();
@@ -166,6 +170,7 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 		});
 
 		var solve_button = new Button("Solve");
+		buttonList[3] = solve_button;
 		solve_button.moveTo( 164, 145 );
 		solve_button.ontouchend = function(){
 			beam_search();
@@ -173,6 +178,7 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 		};
 
 		var move_button = new Button("Move");
+		buttonList[4] = move_button;
 		move_button.moveTo( 217, 145 );
 		move_button.addEventListener( Event.TOUCH_END, function() {
 			board = coppy_board;
@@ -184,21 +190,19 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 		});
 
 		var line_button = new Button("Line");
+		buttonList[5] = line_button;
 		line_button.moveTo( 270, 145 );
 		line_button.addEventListener( Event.TOUCH_END, function() {
 			lineFlag = 1 - lineFlag;
 			display_line();
 		});
 
-		input_button.width  = reset_button.width  = shuffle_button.width  = solve_button.width  = move_button.width  = line_button.width  = 25;
-		input_button.height = reset_button.height = shuffle_button.height = solve_button.height = move_button.height = line_button.height = 42;
-
-		this.addChild( input_button );
-		this.addChild( reset_button );
-		this.addChild( shuffle_button );
-		this.addChild( solve_button );
-		this.addChild( move_button );
-		this.addChild( line_button);
+		for(var i=0, len=buttonList.length; i<len; i++) {
+			buttonList[i].width = 25;
+			buttonList[i].height = 42;
+			buttonList[i].moveBy(0, -20);
+			this.addChild( buttonList[i] );
+		}
 
 		var changeTLF = new Sprite( DROP_SIZE, DROP_SIZE );
 		changeTLF.image = game.assets[ DROP_IMG ];
@@ -453,6 +457,7 @@ InputBoardScene = enchant.Class.create( enchant.Scene, {		// 盤面を手入力�
 			drop.image = game.assets[ DROP_IMG ];
 			drop.frame = i;
 			drop.moveTo( 3 + DROP_SIZE * i, 80 );
+			drop.moveBy(0, -20);
 			this.addChild( drop );
 			drop.addEventListener( Event.TOUCH_END, function(e) {
 				select = e.target.frame;
@@ -460,7 +465,7 @@ InputBoardScene = enchant.Class.create( enchant.Scene, {		// 盤面を手入力�
 		}
 
 		var start_button = new Button("Start");
-		start_button.moveTo( 164, 145 );
+		start_button.moveTo( 164, 125 );
 		start_button.width = 25;
 		start_button.height = 42;
 		this.addChild( start_button );
