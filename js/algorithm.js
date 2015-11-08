@@ -70,54 +70,49 @@ function count_max_combo() {				// 盤面の最大コンボ数を求める関数
 
 
 function count_combo( arr ) {			// arr局面のコンボ数を数える関数
-	var combo = 0, count = 1,
-		pair = [], board = arr.concat(),
-		x, y, z, base;
+	var pair, board = arr.concat(),
+		x, y, z, len, combo = 0;
 
-		while( 1 ) {		// 消せる石がある間繰り返す
-			pair = [];				// 消せる地点を表す配列
+	while( 1 ) {
+		pair = [];				// 消せる地点を表す配列
 
-			for(y=0; y<DROP_ROW; y++)			// 横の探索
-				for(x=0; x<4; x++) {
-					base = fusion( x, y );
-					if( board[ base ] == 10 ) continue;
-					if( board[ base ] == board[ base + 1 ] && board[ base ] == board[ base + 2 ] )
-						pair[ base ] = pair[ base + 1 ] = pair[ base + 2 ] = true;
-				}
-
-			for(x=0; x<DROP_COL; x++)			// 縦の探索
-				for(y=0; y<3; y++) {
-					base = fusion( x, y );
-					if( board[ base ] == 10 ) continue;
-					if( board[ base ] == board[ base + 6 ] && board[ base ] == board[ base + 12 ] )
-						pair[ base ] = pair[ base + 6 ] = pair[ base + 12 ] = true;
-				}
-
-			if( !pair.length ) return combo;			// もし消せる石が１つも無ければコンボ数の総和を返す
-
-			count = 0;
-			var researched = [];
-			for(z=0; z<30; z++)
-				if( pair[z] && board[z] != 10 ){
-					count++;										// コンボ数の計算
-					mark( board, z, board[z], pair, researched );	// 同色同士で繋がっていて消える地点を１０に変える
-				}
-
-			for(x=0; x<DROP_COL; x++)				// 左から右へ
-			for(y=DROP_ROW-2; y>=0; y--) {			// 下（2行目）から上へ
-				base = fusion( x, y );
-				if( board[ base ] == 10 ) continue;		// そこが色の時だけ実行
-				while( 1 ){
-					if( board[ base + 6 ] == 10 ){			// 1つ下が空点なら、入れ替える
-						board[ base + 6 ] = board[ base ];
-						board[ base ] = 10;
-					}else break;
-					if( (base += 6) > 23 ) break;			// 次は下を基準に調べるが、底まで来たらbreak
-				}
+		for( y=0; y<DROP_ROW; y++ )			// 横の探索
+			for( x=0; x<4; x++ ) {
+				z = fusion( x, y );
+				if( board[z] == 10 ) continue;
+				if( board[z] == board[z + 1] && board[z] == board[z + 2] )
+					pair[z] = pair[z + 1] = pair[z + 2] = true;
 			}
 
-			combo += count;
+		for( x=0; x<DROP_COL; x++ )			// 縦の探索
+			for( y=0; y<3; y++ ) {
+				z = fusion( x, y );
+				if( board[z] == 10 ) continue;
+				if( board[z] == board[z + 6] && board[z] == board[z + 12] )
+					pair[z] = pair[z + 6] = pair[z + 12] = true;
+			}
+
+		if( !(len = pair.length) ) return combo;			// もし消せる石が１つも無ければコンボ数の総和を返す
+
+		var researched = [];
+		for( z=0; z<len; z++ )
+			if( pair[z] && board[z] != 10 ){
+				combo++;										// コンボ数を加算
+				mark( board, z, board[z], pair, researched );	// 同色同士で繋がっていて消える地点を１０に変える
+			}
+
+		for( x=0; x<DROP_COL; x++ )				// 左から右へ
+		for( y=DROP_ROW-2; y>-1; y-- ) {		// 下（2行目）から上へ
+			z = fusion( x, y );
+			if( board[z] == 10 ) continue;			// そこが色の時だけ実行
+			do{
+				if( board[z + 6] == 10 ){			// 1つ下が空点なら、入れ替える
+					board[z + 6] = board[z];
+					board[z] = 10;
+				}else break;
+			}while( (z += DROP_COL) < 24 );			// 次は下を基準に調べるが、底まで来たら終了
 		}
+	}
 }
 
 
@@ -127,7 +122,7 @@ function mark( board, z, color, pair, researched ) {	// board[z]のcolor石と�
 	researched[z] = true;			// ｚ地点を調査済みとする
 	if( pair[z] ) board[z] = 10;	// もしpair配列のｚ地点がtrueなら、ドロップを消す
 
-	for(i=0; i<4; i++) {				// 上下左右の探索。もし同じ色であり、かつ非調査済みなら再帰
+	for( i=0; i<4; i++ ) {				// 上下左右の探索。もし同じ色であり、かつ非調査済みなら再帰
 		new_z = adjacent[z][i];
 		if( new_z == -1 ) return;
 		if( board[ new_z ] == color && !researched[ new_z ] ) mark( board, new_z, color, pair, researched );
@@ -236,6 +231,91 @@ function beam_search() {			// ビーム探索を行う関数
 	answer_arr = max_object.history;
 	return max_combo;
 }
+
+
+
+
+_par = [];
+for(i=0; i<30; i++) _par[i] = i;
+
+
+function find( z ) {			// 木の根を求める
+	if( par[z] == z )
+		return z;
+	else
+		return par[z] = find( par[z] );
+}
+
+
+function union( z1, z2 ) {		// 属する集合を合併
+	z1 = find(z1);
+	z2 = find(z2);
+	if( z1 == z2 ) return;
+
+	par[z1] = z2;
+}
+
+
+
+function count_combo3( arr ) {	// arr局面のコンボ数を数える関数（union find使用）
+	var board = arr.concat(),
+		x, y, z, len, connection, combo = 0;
+
+	while( 1 ) {
+		comboFlag = [];
+		par = _par.concat();				// par[i] == i ならば根
+
+		for( y=0; y<DROP_ROW; y++ ) {		// 横の連絡確認
+			connection = 0;
+			for( x=0; x<DROP_COL-1; x++ ){
+				z = fusion( x, y );
+				if( board[z] != 10 && board[z] == board[z + 1] ){
+					union( z, z + 1 );
+					if( ++connection > 1 ) comboFlag[z-1] = comboFlag[z] = comboFlag[z + 1] = true;
+				}else
+					connection = 0;
+			}
+		}
+
+		for( x=0; x<DROP_COL; x++ ) {		// 縦の連絡確認
+			connection = 0;
+			for( y=0; y<DROP_ROW-1; y++ ){
+				z = fusion( x, y );
+				if( board[z] != 10 && board[z] == board[z + DROP_COL] ){
+					union( z, z + DROP_COL );
+					if( ++connection > 1 ) comboFlag[z - DROP_COL] = comboFlag[z] = comboFlag[z + DROP_COL] = true;
+				}else
+					connection = 0;
+			}
+		}
+
+		if( !(len = comboFlag.length) ) return combo;	// もし消せる石が１つもなければコンボ数の総和を返す
+
+		researched_group = [];
+		for( z=0; z<len; z++ )
+			if( comboFlag[z] ){
+				board[z] = 10;
+				var parent = find(z);
+				if( !researched_group[ parent ] ){
+					researched_group[ parent ] = true;
+					combo++;
+				}
+			}
+
+		for( x=0; x<DROP_COL; x++ )				// 左から右へ
+		for( y=DROP_ROW-2; y>-1; y-- ) {		// 下（2行目）から上へ
+			base = fusion( x, y );
+			if( board[ base ] == 10 ) continue;		// そこが色の時だけ実行
+			do{
+				if( board[ base + 6 ] == 10 ){			// 1つ下が空点なら、入れ替える
+					board[ base + 6 ] = board[ base ];
+					board[ base ] = 10;
+				}else break;
+			}while( (base += DROP_COL) < 24 );			// 次は下を基準に調べるが、底まで来たら終了
+		}
+	}
+}
+
 
 
 function bubble_sort( dam ) {		// バブルソート関数

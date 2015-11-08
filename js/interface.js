@@ -226,14 +226,15 @@ var all_length = 0;
 		var startTime = new Date();
 		for(var i=0; i<1000000; i++){
 			shuffle_board();
-			all_combo += beam_search( board );
-			all_length += answer_arr.length - 1;
+			//all_combo += beam_search( board );
+			//all_length += answer_arr.length - 1;
+			count_combo3( board );
 		}
 		var endTime = new Date();
 		console.log("100回の実行時間：" + (endTime - startTime) / 1000 + "秒" );
-		console.log("平均コンボ：" + (all_combo / 100) + "　平均手数：" + (all_length / 100) );
+		//console.log("平均コンボ：" + (all_combo / 100) + "　平均手数：" + (all_length / 100) );
 */
-
+		//console.log( count_combo3( board ) );
 	}
 });
 
@@ -440,7 +441,6 @@ InputBoardScene = enchant.Class.create( enchant.Scene, {		// 盤面を手入力�
 	initialize: function() {
 		Scene.call( this );
 
-		dropList = [];
 		var tile = new Sprite( STAGE_WIDTH, STAGE_HEIGHT );
 		tile.image = game.assets[ TILE_IMG ];
 		tile.ontouchstart = tile.ontouchmove = function(e){ addDrops(e); };
@@ -455,6 +455,19 @@ InputBoardScene = enchant.Class.create( enchant.Scene, {		// 盤面を手入力�
 			drop.addEventListener( Event.TOUCH_END, function(e) {
 				select = e.target.frame;
 			});
+		}
+
+		for(var x=0; x<DROP_COL; x++)
+		for(var y=0; y<DROP_ROW; y++){
+			var z = fusion( x, y );
+			drop = new Sprite( DROP_SIZE, DROP_SIZE );
+			drop.image = game.assets[ DROP_IMG ];
+			drop.frame = board[z];
+			drop.x = DROP_SIZE * x;
+			drop.y = DROP_SIZE * y + TOP_MARGIN;
+			drop.ontouchstart = drop.ontouchmove = function(e){ addDrops(e); };
+			dropList[z]	= drop;
+			this.addChild( drop );
 		}
 
 		var start_button = new Button("Start");
@@ -487,7 +500,7 @@ function addDrops( e ) {
 	scene.addChild( drop );
 
 	var z = fusion( touched_X, touched_Y );
-	board[z]		= select;
+	board[z] = select;
 	if( dropList[z] ) dropList[z].scene.removeChild( dropList[z] );
 	dropList[z]	= drop;
 }
