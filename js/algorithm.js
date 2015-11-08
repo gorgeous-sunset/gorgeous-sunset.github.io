@@ -62,9 +62,9 @@ function shuffle_board() {					// ランダムで局面を生成する関数
 function count_max_combo() {				// 盤面の最大コンボ数を求める関数(3で割るだけ)
 	var	combo = 0, kind_list = [], i;
 	
-	for(i=0; i<DROP_KIND; i++) kind_list[i] = 0;	// 配列の初期化
-	for(i=0; i<30; i++) kind_list[ board[i] ]++;	// 個数のカウント
-	for(i=0; i<DROP_KIND; i++) combo += Math.floor(kind_list[i] / 3);
+	for( i=0; i<DROP_KIND; i++ ) kind_list[i] = 0;	// 配列の初期化
+	for( i=0; i<30; i++ ) kind_list[ board[i] ]++;	// 個数のカウント
+	for( i=0; i<DROP_KIND; i++ ) combo += Math.floor(kind_list[i] / 3);
 	return combo;
 }
 
@@ -135,7 +135,7 @@ function beam_search() {			// ビーム探索を行う関数
 		coppy_board, hashCode, history, combo,
 		parent, next_research, max_combo = 0, worst = -1,
 		nowIndex, nextIndex, preIndex, nowColor, nextColor,
-		t, z, i, j, len, same, front, rear, size = 30, STACK = 5000,
+		t, z, i, j, front, rear, size = 30, STACK = 5000,
 		start_time = new Date(), children = 0, combo_limit = count_max_combo();
 
 	for( z=0, hashCode=0; z<30; z++ ) hashCode ^= hashKey[z][ board[z] ];	// 初期局面のハッシュコード作成
@@ -172,7 +172,7 @@ function beam_search() {			// ビーム探索を行う関数
 
 				if( Array.isArray( researched[ hashCode ] ) ){			// 同一局面の判定 researched[hashCode]に既に配列があれば一度訪れた局面
 					next_research = researched[ hashCode ];
-					same = false, len = next_research.length;
+					var same = false, len = next_research.length;
 
 					for( j=1; j<len; j++ ) if( next_research[j] == nextIndex ) { same = true; break; }
 					if( same ) continue;
@@ -185,8 +185,8 @@ function beam_search() {			// ビーム探索を行う関数
 				next_research.push( nextIndex );
 
 				//combo = count_combo( coppy_board );			// コンボ数の計算
-				//if( combo <= worst ) continue;				// 親ノードの最低コンボを超えなければcontinue
-				if( dam[rear] && dam[rear].combo >= combo ) continue;	// 追加先を超えなければcontinue
+				if( combo <= worst ) continue;							// 親ノードの最低コンボを超えなければcontinue
+				//if( dam[rear] && dam[rear].combo >= combo ) continue;	// 追加先を超えなければcontinue
 
 				history = parent.history.concat();
 				history.push( nextIndex );
@@ -198,19 +198,7 @@ function beam_search() {			// ビーム探索を行う関数
 					rear = 0;					// 再び0地点から代入するようにする（上書き）
 				}
 				dam[ rear++ ] = my_object;		// ノードをdam配列に追加する
-/*
-				if( rear < STACK ) {				// ノード数がSTACK以下の場合は、dam配列にノードを追加する
-					dam[ rear++ ] = my_object;
-				}else{								// STACKを超えた場合は、dam配列から最もcomboが少ないノードを探し、上書きする。
-					worst = 10000;
-					for(j=0; j<STACK; j++)
-						if( worst > dam[j].combo ) {
-							worst = dam[j].combo;
-							index = j;
-						}
-					if( my_object.combo > dam[ index ].combo ) dam[ index ] = my_object;
-				}
-*/
+
 				if( combo > max_combo ){		// 最大コンボ数を更新したノードを保存する
 					max_combo	= combo;
 					max_object	= my_object;
@@ -376,41 +364,39 @@ function hide_sort( dam ) {
 
 
 function count_combo2( board ) {			// arr局面のコンボ数を数える関数( interface用 )
-	var combo = 0, count = 0,
-		board, pair, disappear,		// 盤面の状態、消せる石
-		x, y, z, base, target;
+	var board, pair, disappear,
+		x, y, z, target, combo = 0;
 
 		pair = [];				// 消せる地点を表す配列
 		disappear = [];
 
-		for(y=0; y<DROP_ROW; y++) {		// 横の探索
+		for(y=0; y<DROP_ROW; y++)		// 横の探索
 			for(x=0; x<4; x++) {
-				base = fusion( x, y );
-				if( board[ base ] == 10 ) continue;
-				if( board[ base ] == board[ base + 1 ] && board[ base ] == board[ base + 2 ] )
-					pair[ base ] = pair[ base + 1 ] = pair[ base + 2 ] = true;
+				z = fusion( x, y );
+				if( board[z] == 10 ) continue;
+				if( board[z] == board[z + 1] && board[z] == board[z + 2] )
+					pair[z] = pair[z + 1] = pair[z + 2] = true;
 			}
-		}
 
-		for(x=0; x<DROP_COL; x++) {		// 縦の探索
-			for(y=0; y<3; y++) {
-				base = fusion( x, y );
-				if( board[ base ] == 10 ) continue;
-				if( board[ base ] == board[ base + 6 ] && board[ base ] == board[ base + 12 ] )
-					pair[ base ] = pair[ base + 6 ] = pair[ base + 12 ] = true;
+		for( x=0; x<DROP_COL; x++ )		// 縦の探索
+			for( y=0; y<3; y++ ){
+				z = fusion( x, y );
+				if( board[z] == 10 ) continue;
+				if( board[z] == board[z + 6] && board[z] == board[z + 12] )
+					pair[z] = pair[z + 6] = pair[z + 12] = true;
 			}
-		}
+
 		if( !pair.length ) return 0;			// もし消せる石が１つも無ければ０を返す
 
-		count = 0;
+		combo = 0;
 		var researched = [];
 		for( y=DROP_ROW-1; y>-1; y-- )
 		for( x=0; x<DROP_COL; x++ ){
 			z = fusion( x, y );
 			if( pair[z] && board[z] != 10 ){
-				disappear[ count ] = [];
-				mark2( board, z, board[z], pair, disappear[count], researched );
-				count++;
+				disappear[ combo ] = [];
+				mark2( board, z, board[z], pair, disappear[combo], researched );
+				combo++;
 			}
 		}
 

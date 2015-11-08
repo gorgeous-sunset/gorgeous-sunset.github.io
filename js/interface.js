@@ -224,15 +224,15 @@ GameStartScene = enchant.Class.create(enchant.Scene, {		// メインのシーン
 var all_combo = 0;
 var all_length = 0;
 		var startTime = new Date();
-		for(var i=0; i<1000000; i++){
+		for(var i=0; i<100; i++){
 			shuffle_board();
-			//all_combo += beam_search( board );
-			//all_length += answer_arr.length - 1;
-			count_combo3( board );
+			all_combo += beam_search( board );
+			all_length += answer_arr.length - 1;
+			//count_combo3( board );
 		}
 		var endTime = new Date();
 		console.log("100回の実行時間：" + (endTime - startTime) / 1000 + "秒" );
-		//console.log("平均コンボ：" + (all_combo / 100) + "　平均手数：" + (all_length / 100) );
+		console.log("平均コンボ：" + (all_combo / 100) + "　平均手数：" + (all_length / 100) );
 */
 		//console.log( count_combo3( board ) );
 	}
@@ -399,7 +399,7 @@ function dropDrops() {					// ドロップを落とす関数
 function changeDrops( count ) {			// answer_arrに基づいてドロップを動かす関数
 	var start_index, next_index,
 		start_x, next_y,
-		start_y, next_y, speed = 11;
+		start_y, next_y, speed = 7;
 
 	if( count == 0 ) {								// 初回呼び出し時の処理
 		target = dropList[ answer_arr[0] ];
