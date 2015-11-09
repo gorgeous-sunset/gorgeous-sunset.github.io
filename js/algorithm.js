@@ -71,7 +71,7 @@ function count_max_combo() {				// 盤面の最大コンボ数を求める関数
 
 function count_combo( arr ) {			// arr局面のコンボ数を数える関数
 	var bitCombo, board = arr.concat(),
-		x, y, z, len, combo = 0;
+		x, y, z, researched, combo = 0;
 
 	while( 1 ) {
 		bitCombo = 0;			// 各ビットが消せる地点を表す（前後は逆）
@@ -92,16 +92,14 @@ function count_combo( arr ) {			// arr局面のコンボ数を数える関数
 
 		if( !bitCombo ) return combo;			// もし消せる石が１つも無ければコンボ数の総和を返す
 
-		var researched = [];
+		researched = 0;
 		for( z=0; z<28; z++ )
 			if( (bitCombo & (1 << z)) && board[z] != 10 ){
 				combo++;											// コンボ数を加算
 				mark( board, z, board[z], bitCombo, researched );	// 同色同士で繋がっていて消える地点を１０に変える
 			}
 
-		for( x=0; x<DROP_COL; x++ )				// 左から右へ
-		for( y=DROP_ROW-2; y>-1; y-- ) {		// 下（2行目）から上へ
-			z = fusion( x, y );
+		for( z=23; z>-1; z-- ){
 			if( board[z] == 10 ) continue;			// そこが色の時だけ実行
 			do{
 				if( board[z + 6] == 10 ){			// 1つ下が空点なら、入れ替える
@@ -117,13 +115,13 @@ function count_combo( arr ) {			// arr局面のコンボ数を数える関数
 function mark( board, z, color, bitCombo, researched ) {	// board[z]のcolor石と繋がっている、同色であり、
 	var i, new_z;											// かつpair配列がtrueの石を全て１０に変える関数
 
-	researched[z] = true;						// ｚ地点を調査済みとする
+	researched |= 1 << z;						// ｚ地点を調査済みとする
 	if( (bitCombo & (1 << z)) ) board[z] = 10;	// もしbitComboのｚ地点が１なら、ドロップを消す
 
 	for( i=0; i<4; i++ ) {				// 上下左右の探索。もし同じ色であり、かつ非調査済みなら再帰
 		new_z = adjacent[z][i];
 		if( new_z == -1 ) return;
-		if( board[ new_z ] == color && !researched[ new_z ] ) mark( board, new_z, color, bitCombo, researched );
+		if( board[ new_z ] == color && !(researched & (1 << new_z)) ) mark( board, new_z, color, bitCombo, researched );
 	}
 }
 
