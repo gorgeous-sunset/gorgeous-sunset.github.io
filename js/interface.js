@@ -228,7 +228,7 @@ var all_length = 0;
 			shuffle_board();
 			all_combo += beam_search( board );
 			all_length += answer_arr.length - 1;
-			//count_combo3( board );
+			//count_combo( board );
 		}
 		var endTime = new Date();
 		console.log("100回の実行時間：" + (endTime - startTime) / 1000 + "秒" );

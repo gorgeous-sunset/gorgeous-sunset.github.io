@@ -70,35 +70,33 @@ function count_max_combo() {				// 盤面の最大コンボ数を求める関数
 
 
 function count_combo( arr ) {			// arr局面のコンボ数を数える関数
-	var pair, board = arr.concat(),
+	var bitCombo, board = arr.concat(),
 		x, y, z, len, combo = 0;
 
 	while( 1 ) {
-		pair = [];				// 消せる地点を表す配列
+		bitCombo = 0;			// 各ビットが消せる地点を表す（前後は逆）
 
 		for( y=0; y<DROP_ROW; y++ )			// 横の探索
 			for( x=0; x<4; x++ ) {
 				z = fusion( x, y );
 				if( board[z] == 10 ) continue;
-				if( board[z] == board[z + 1] && board[z] == board[z + 2] )
-					pair[z] = pair[z + 1] = pair[z + 2] = true;
+				if( board[z] == board[z + 1] && board[z] == board[z + 2] ) bitCombo |= 7 << z;		// 0000000000111
 			}
 
 		for( x=0; x<DROP_COL; x++ )			// 縦の探索
 			for( y=0; y<3; y++ ) {
 				z = fusion( x, y );
 				if( board[z] == 10 ) continue;
-				if( board[z] == board[z + 6] && board[z] == board[z + 12] )
-					pair[z] = pair[z + 6] = pair[z + 12] = true;
+				if( board[z] == board[z + 6] && board[z] == board[z + 12] ) bitCombo |= 4161 << z;	// 1000001000001
 			}
 
-		if( !(len = pair.length) ) return combo;			// もし消せる石が１つも無ければコンボ数の総和を返す
+		if( !bitCombo ) return combo;			// もし消せる石が１つも無ければコンボ数の総和を返す
 
 		var researched = [];
-		for( z=0; z<len; z++ )
-			if( pair[z] && board[z] != 10 ){
-				combo++;										// コンボ数を加算
-				mark( board, z, board[z], pair, researched );	// 同色同士で繋がっていて消える地点を１０に変える
+		for( z=0; z<28; z++ )
+			if( (bitCombo & (1 << z)) && board[z] != 10 ){
+				combo++;											// コンボ数を加算
+				mark( board, z, board[z], bitCombo, researched );	// 同色同士で繋がっていて消える地点を１０に変える
 			}
 
 		for( x=0; x<DROP_COL; x++ )				// 左から右へ
@@ -116,16 +114,16 @@ function count_combo( arr ) {			// arr局面のコンボ数を数える関数
 }
 
 
-function mark( board, z, color, pair, researched ) {	// board[z]のcolor石と繋がっている、同色であり、
-	var i, new_z;										// かつpair配列がtrueの石を全て１０に変える関数
+function mark( board, z, color, bitCombo, researched ) {	// board[z]のcolor石と繋がっている、同色であり、
+	var i, new_z;											// かつpair配列がtrueの石を全て１０に変える関数
 
-	researched[z] = true;			// ｚ地点を調査済みとする
-	if( pair[z] ) board[z] = 10;	// もしpair配列のｚ地点がtrueなら、ドロップを消す
+	researched[z] = true;						// ｚ地点を調査済みとする
+	if( (bitCombo & (1 << z)) ) board[z] = 10;	// もしbitComboのｚ地点が１なら、ドロップを消す
 
 	for( i=0; i<4; i++ ) {				// 上下左右の探索。もし同じ色であり、かつ非調査済みなら再帰
 		new_z = adjacent[z][i];
 		if( new_z == -1 ) return;
-		if( board[ new_z ] == color && !researched[ new_z ] ) mark( board, new_z, color, pair, researched );
+		if( board[ new_z ] == color && !researched[ new_z ] ) mark( board, new_z, color, bitCombo, researched );
 	}
 }
 
@@ -185,8 +183,8 @@ function beam_search() {			// ビーム探索を行う関数
 				next_research.push( nextIndex );
 
 				//combo = count_combo( coppy_board );			// コンボ数の計算
-				if( combo <= worst ) continue;							// 親ノードの最低コンボを超えなければcontinue
-				//if( dam[rear] && dam[rear].combo >= combo ) continue;	// 追加先を超えなければcontinue
+				//if( combo <= worst ) continue;						// 親ノードの最低コンボを超えなければcontinue
+				if( dam[rear] && dam[rear].combo >= combo ) continue;	// 追加先を超えなければcontinue
 
 				history = parent.history.concat();
 				history.push( nextIndex );
@@ -244,13 +242,14 @@ function union( z1, z2 ) {		// 属する集合を合併
 }
 
 
-
 function count_combo3( arr ) {	// arr局面のコンボ数を数える関数（union find使用）
 	var board = arr.concat(),
 		x, y, z, len, connection, combo = 0;
 
 	while( 1 ) {
-		comboFlag = [];
+//		comboFlag = [];
+		comboFlag = 0;
+
 		par = _par.concat();				// par[i] == i ならば根
 
 		for( y=0; y<DROP_ROW; y++ ) {		// 横の連絡確認
@@ -259,7 +258,12 @@ function count_combo3( arr ) {	// arr局面のコンボ数を数える関数（u
 				z = fusion( x, y );
 				if( board[z] != 10 && board[z] == board[z + 1] ){
 					union( z, z + 1 );
-					if( ++connection > 1 ) comboFlag[z-1] = comboFlag[z] = comboFlag[z + 1] = true;
+					if( ++connection > 1 ) //comboFlag[z-1] = comboFlag[z] = comboFlag[z + 1] = true;
+					{
+						comboFlag |= 1 << z - 1;
+						comboFlag |= 1 << z;
+						comboFlag |= 1 << z + 1;
+					}
 				}else
 					connection = 0;
 			}
@@ -271,17 +275,22 @@ function count_combo3( arr ) {	// arr局面のコンボ数を数える関数（u
 				z = fusion( x, y );
 				if( board[z] != 10 && board[z] == board[z + DROP_COL] ){
 					union( z, z + DROP_COL );
-					if( ++connection > 1 ) comboFlag[z - DROP_COL] = comboFlag[z] = comboFlag[z + DROP_COL] = true;
+					if( ++connection > 1 ) //comboFlag[z - DROP_COL] = comboFlag[z] = comboFlag[z + DROP_COL] = true;
+					{
+						comboFlag |= 1 << z - DROP_COL;
+						comboFlag |= 1 << z;
+						comboFlag |= 1 << z + DROP_COL;
+					}
 				}else
 					connection = 0;
 			}
 		}
 
-		if( !(len = comboFlag.length) ) return combo;	// もし消せる石が１つもなければコンボ数の総和を返す
+		if( !comboFlag ) return combo;	// もし消せる石が１つもなければコンボ数の総和を返す
 
 		researched_group = [];
-		for( z=0; z<len; z++ )
-			if( comboFlag[z] ){
+		for( z=0; z<30; z++ )
+			if( comboFlag & (1 << z) ){
 				board[z] = 10;
 				var parent = find(z);
 				if( !researched_group[ parent ] ){
