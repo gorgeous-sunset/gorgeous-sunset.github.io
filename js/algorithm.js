@@ -182,8 +182,8 @@ function beam_search() {			// ビーム探索を行う関数
 				next_research.push( nextIndex );
 
 				//combo = count_combo( coppy_board );			// コンボ数の計算
-				//if( combo <= worst ) continue;						// 親ノードの最低コンボを超えなければcontinue
-				if( dam[rear] && dam[rear].combo >= combo ) continue;	// 追加先を超えなければcontinue
+				if( combo <= worst ) continue;						// 親ノードの最低コンボを超えなければcontinue
+				//if( dam[rear] && dam[rear].combo >= combo ) continue;	// 追加先を超えなければcontinue
 
 				history = parent.history.concat();
 				history.push( nextIndex );
