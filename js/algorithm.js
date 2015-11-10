@@ -99,7 +99,8 @@ function count_combo( arr ) {			// arr局面のコンボ数を数える関数
 				mark( board, z, board[z], bitCombo, researched );	// 同色同士で繋がっていて消える地点を１０に変える
 			}
 
-		for( z=23; z>-1; z-- ){
+		for( _z=23; _z>-1; _z-- ){
+			z = _z;
 			if( board[z] == 10 ) continue;			// そこが色の時だけ実行
 			do{
 				if( board[z + 6] == 10 ){			// 1つ下が空点なら、入れ替える
